@@ -97,7 +97,7 @@ def add_menu(root):
 
 def main():
     global canvas, drawing_tool, current_drawn, selected
-    drawing_tool = "rectangle"
+    drawing_tool = None
     current_drawn = None
     selected = None
 
@@ -105,29 +105,40 @@ def main():
     root.title("SVG Editor")
     add_menu(root)
 
+    # Toolbar auf der linken Seite des Fensters
     toolbar = tk.Frame(root, bg="grey")
-    toolbar.pack(side="top", fill="x")
+    toolbar.pack(side="left", fill="y")
 
-    rect_button = tk.Button(toolbar, text="Rechteck", command=lambda: select_tool("rectangle"))
-    rect_button.pack(side="left")
+    # Bilder laden
+    rect_image = tk.PhotoImage(file="icons/rectangle.png").subsample(12)
+    circle_image = tk.PhotoImage(file="icons/circle.png").subsample(12)
+    line_image = tk.PhotoImage(file="icons/line.png").subsample(12)
+    free_image = tk.PhotoImage(file="icons/free.png").subsample(12)
+    move_image = tk.PhotoImage(file="icons/move.png").subsample(12)
+    resize_image = tk.PhotoImage(file="icons/resize.png").subsample(12)
+    reset_image = tk.PhotoImage(file="icons/reset.png").subsample(12)
 
-    circle_button = tk.Button(toolbar, text="Kreis", command=lambda: select_tool("circle"))
-    circle_button.pack(side="left")
+    # Buttons mit Bildern erstellen
+    rect_button = tk.Button(toolbar, image=rect_image, command=lambda: select_tool("rectangle"))
+    rect_button.pack(side="top", fill="x")
 
-    line_button = tk.Button(toolbar, text="Linie", command=lambda: select_tool("line"))
-    line_button.pack(side="left")
+    circle_button = tk.Button(toolbar, image=circle_image, command=lambda: select_tool("circle"))
+    circle_button.pack(side="top", fill="x")
 
-    free_button = tk.Button(toolbar, text="Freihändig", command=lambda: select_tool("free"))
-    free_button.pack(side="left")
+    line_button = tk.Button(toolbar, image=line_image, command=lambda: select_tool("line"))
+    line_button.pack(side="top", fill="x")
 
-    move_button = tk.Button(toolbar, text="Verschieben", command=lambda: select_tool("move"))
-    move_button.pack(side="left")
+    free_button = tk.Button(toolbar, image=free_image, command=lambda: select_tool("free"))
+    free_button.pack(side="top", fill="x")
 
-    resize_button = tk.Button(toolbar, text="Größe ändern", command=lambda: select_tool("resize"))
-    resize_button.pack(side="left")
+    move_button = tk.Button(toolbar, image=move_image, command=lambda: select_tool("move"))
+    move_button.pack(side="top", fill="x")
 
-    reset_button = tk.Button(toolbar, text="Zurücksetzen", command=reset_canvas)
-    reset_button.pack(side="left")
+    resize_button = tk.Button(toolbar, image=resize_image, command=lambda: select_tool("resize"))
+    resize_button.pack(side="top", fill="x")
+
+    reset_button = tk.Button(toolbar, image=reset_image, command=reset_canvas)
+    reset_button.pack(side="top", fill="x")
 
     canvas = tk.Canvas(root, width=800, height=600, bg='white')
     canvas.pack(fill=tk.BOTH, expand=True)
