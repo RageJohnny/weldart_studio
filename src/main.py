@@ -20,27 +20,34 @@ class SVGEditor:
 
         self.add_menu()
         self.toolbar = tk.Frame(self.root, bg="lightgrey")
-        self.toolbar.pack(side="left", fill="y")
+        self.toolbar.pack(side="left", fill="y", padx=(10, 10), pady=(10,10))
 
         self.load_icons()
         self.add_buttons_to_toolbar()
 
-        # Initialize line thickness components here to ensure variables are set beforehand
-        self.line_thickness_frame = tk.Frame(self.toolbar, bg="lightgrey")
+        self.line_thickness_frame = tk.Frame(self.root, bg="lightgrey")
+        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="lightgrey")
+        self.line_thickness_label.pack(pady=(5, 0))  # Padding to separate from the entry box
         self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
         self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var)
         self.line_thickness_entry.pack(pady=5)
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
         self.line_thickness_button.pack(pady=5)
-        self.line_thickness_frame.pack(side="right", fill="y")
+        self.line_thickness_frame.pack(side="right", fill="y",padx=(10, 10), pady=(10,10))
+
+        
 
         self.horizontal_ruler = tk.Canvas(self.root, bg='white', height=30)
+        self.horizontal_ruler.pack(side="top", fill="x", padx=(30, 0))
         self.vertical_ruler = tk.Canvas(self.root, bg='white', width=30)
+        self.vertical_ruler.pack(side="left", fill="y")
+
 
         self.canvas = tk.Canvas(self.root, width=800, height=600, bg='white')
         self.horizontal_ruler.pack(side="top", fill=tk.X)
         self.vertical_ruler.pack(side="left", fill=tk.Y)
         self.canvas.pack(side="left", fill=tk.BOTH, expand=True)
+        
 
         self.bind_canvas_events()
         self.root.bind("<Configure>", self.redraw_rulers)
@@ -170,7 +177,7 @@ class SVGEditor:
 
     def select_tool(self, tool):
         self.drawing_tool = tool
-        print(tool + " ausgewählt")
+        #print(tool + " ausgewählt")
         self.selected = None
         self.current_drawn = None
         if self.drawing_tool == "free":
