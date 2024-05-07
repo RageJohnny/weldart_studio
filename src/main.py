@@ -4,24 +4,53 @@ import xml.etree.ElementTree as ET
 
 class SVGEditor:
     def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("WELDART Studio")
+        self.root.geometry("1000x700")
+        self.root.iconbitmap('icons/logo.ico')
+
+        # Definiere alle Variablen vor ihrer Verwendung
         self.drawing_tool = None
         self.current_drawn = None
         self.selected = None
         self.line_thickness = 1
-        self.fill_enabled = False  # Variable zur Verfolgung der Füllungsoption
+        self.fill_enabled = False
         self.undo_stack = []
         self.redo_stack = []
 
-        self.root = tk.Tk()
-        self.root.title("WELDART Studio")
-
-        self.root.iconbitmap('icons/logo.ico')
-
         self.add_menu()
-
         self.toolbar = tk.Frame(self.root, bg="lightgrey")
         self.toolbar.pack(side="left", fill="y")
 
+        self.load_icons()
+        self.add_buttons_to_toolbar()
+
+        # Initialize line thickness components here to ensure variables are set beforehand
+        self.line_thickness_frame = tk.Frame(self.toolbar, bg="lightgrey")
+        self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
+        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var)
+        self.line_thickness_entry.pack(pady=5)
+        self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
+        self.line_thickness_button.pack(pady=5)
+        self.line_thickness_frame.pack(side="right", fill="y")
+
+        self.horizontal_ruler = tk.Canvas(self.root, bg='white', height=30)
+        self.vertical_ruler = tk.Canvas(self.root, bg='white', width=30)
+
+        self.canvas = tk.Canvas(self.root, width=800, height=600, bg='white')
+        self.horizontal_ruler.pack(side="top", fill=tk.X)
+        self.vertical_ruler.pack(side="left", fill=tk.Y)
+        self.canvas.pack(side="left", fill=tk.BOTH, expand=True)
+
+        self.bind_canvas_events()
+        self.root.bind("<Configure>", self.redraw_rulers)
+
+        self.fill_checkbox_var = tk.BooleanVar(value=False)
+        self.fill_checkbox = ttk.Checkbutton(self.toolbar, text="Gefüllt", variable=self.fill_checkbox_var, command=self.toggle_fill)
+        self.fill_checkbox.pack(side="top", fill="x")
+
+    def load_icons(self):
+        # Icon files should be in the 'icons' directory relative to this script
         self.rect_image = tk.PhotoImage(file="icons/rectangle.png").subsample(12)
         self.circle_image = tk.PhotoImage(file="icons/circle.png").subsample(12)
         self.line_image = tk.PhotoImage(file="icons/line.png").subsample(12)
@@ -31,69 +60,58 @@ class SVGEditor:
         self.reset_image = tk.PhotoImage(file="icons/reset.png").subsample(12)
         self.select_image = tk.PhotoImage(file="icons/select.png").subsample(12)
 
+    def add_buttons_to_toolbar(self):
         self.rect_button = tk.Button(self.toolbar, image=self.rect_image, command=lambda: self.select_tool("rectangle"))
         self.rect_button.pack(side="top", fill="x")
-
         self.circle_button = tk.Button(self.toolbar, image=self.circle_image, command=lambda: self.select_tool("circle"))
         self.circle_button.pack(side="top", fill="x")
-
         self.line_button = tk.Button(self.toolbar, image=self.line_image, command=lambda: self.select_tool("line"))
         self.line_button.pack(side="top", fill="x")
-
         self.free_button = tk.Button(self.toolbar, image=self.free_image, command=lambda: self.select_tool("free"))
         self.free_button.pack(side="top", fill="x")
-
         self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"))
         self.move_button.pack(side="top", fill="x")
-
         self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"))
         self.resize_button.pack(side="top", fill="x")
-
         self.reset_button = tk.Button(self.toolbar, image=self.reset_image, command=self.reset_canvas)
         self.reset_button.pack(side="top", fill="x")
 
-        self.line_thickness_frame = tk.Frame(self.root, bg="lightgrey")
-
-        ttk.Label(self.line_thickness_frame, text="Linienstärke:").pack(pady=5)
-        self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
-        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var, state="disabled")
-        self.line_thickness_entry.pack(pady=5)
-
-        self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
-        self.line_thickness_button.pack(pady=5)
-
-        self.canvas = tk.Canvas(self.root, width=800, height=600, bg='white')
-        self.canvas.pack(side="left", fill=tk.BOTH, expand=True)
-
+    def bind_canvas_events(self):
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_button_motion)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        # Checkbox zur Auswahl der Füllung hinzufügen
-        self.fill_checkbox_var = tk.BooleanVar(value=False)
-        self.fill_checkbox = ttk.Checkbutton(self.toolbar, text="Gefüllt", variable=self.fill_checkbox_var, command=self.toggle_fill)
-        self.fill_checkbox.pack(side="top", fill="x")
+    def redraw_rulers(self, event=None):
+        self.horizontal_ruler.delete("all")
+        self.vertical_ruler.delete("all")
+        self.add_rulers()
+
+    def add_rulers(self):
+        width = self.canvas.winfo_width()
+        for i in range(0, width, 50):
+            self.horizontal_ruler.create_line(i, 10, i, 30, fill="gray")
+            self.horizontal_ruler.create_text(i+5, 20, text=str(i), anchor="n")
+        height = self.canvas.winfo_height()
+        for i in range(0, height, 50):
+            self.vertical_ruler.create_line(10, i, 30, i, fill="gray")
+            self.vertical_ruler.create_text(20, i+5, text=str(i), anchor="e")
 
     def add_menu(self):
         self.menu_bar = tk.Menu(self.root)
-
         file_menu = tk.Menu(self.menu_bar, tearoff=0)
         file_menu.add_command(label="Speichern als SVG", command=self.save_as_svg)
         self.menu_bar.add_cascade(label="Datei", menu=file_menu)
-
         about_menu = tk.Menu(self.menu_bar, tearoff=0)
-        about_menu.add_command(label="Über", command=self.show_about)
+        about_menu.add_command(label="Über", command=lambda: messagebox.showinfo("Über", "Erstellt von Johannes Georg Larcher"))
         self.menu_bar.add_cascade(label="Über", menu=about_menu)
-
         self.root.config(menu=self.menu_bar)
 
-    def show_about(self):
-        messagebox.showinfo("Über", "Erstellt von Johannes Georg Larcher")
+    def toggle_fill(self):
+        self.fill_enabled = not self.fill_enabled
 
     def on_button_press(self, event):
         self.undo_stack.append(self.canvas.find_all())
         self.redo_stack = []
-
         self.start_x, self.start_y = event.x, event.y
         if self.drawing_tool == "move" or self.drawing_tool == "resize":
             self.selected = self.canvas.find_closest(event.x, event.y)[0]
@@ -112,9 +130,6 @@ class SVGEditor:
         elif self.drawing_tool == "free":
             self.prev_x, self.prev_y = event.x, event.y
 
-    def toggle_fill(self):
-        self.fill_enabled = not self.fill_enabled
-
     def on_button_motion(self, event):
         if self.drawing_tool == "move" and self.selected:
             dx, dy = event.x - self.start_x, event.y - self.start_y
@@ -128,23 +143,24 @@ class SVGEditor:
             self.prev_x, self.prev_y = x, y
 
     def update_shape(self, event):
-        if self.current_drawn and (self.drawing_tool in ["rectangle", "resize"]):
-            if (event.state & 0x0001):
-                side = max(abs(event.x - self.start_x), abs(event.y - self.start_y))
-                self.canvas.coords(self.current_drawn, self.start_x, self.start_y, self.start_x + side * (1 if event.x > self.start_x else -1), self.start_y + side * (1 if event.y > self.start_y else -1))
-            else:
+        if self.current_drawn:
+            if self.drawing_tool in ["rectangle", "resize"]:
+                if (event.state & 0x0001):
+                    side = max(abs(event.x - self.start_x), abs(event.y - self.start_y))
+                    self.canvas.coords(self.current_drawn, self.start_x, self.start_y, self.start_x + side * (1 if event.x > self.start_x else -1), self.start_y + side * (1 if event.y > self.start_y else -1))
+                else:
+                    self.canvas.coords(self.current_drawn, self.start_x, self.start_y, event.x, event.y)
+            elif self.drawing_tool in ["circle", "resize"]:
+                if (event.state & 0x0001):
+                    radius = max(abs(event.x - self.start_x), abs(event.y - self.start_y))
+                    self.canvas.coords(self.current_drawn, self.start_x - radius, self.start_y - radius, self.start_x + radius, self.start_y + radius)
+                else:
+                    dx = event.x - self.start_x
+                    dy = event.y - self.start_y
+                    radius = (dx**2 + dy**2)**0.5
+                    self.canvas.coords(self.current_drawn, self.start_x - radius, self.start_y - radius, self.start_x + radius, self.start_y + radius)
+            elif self.drawing_tool == "line":
                 self.canvas.coords(self.current_drawn, self.start_x, self.start_y, event.x, event.y)
-        elif self.current_drawn and (self.drawing_tool in ["circle", "resize"]):
-            if (event.state & 0x0001):
-                radius = max(abs(event.x - self.start_x), abs(event.y - self.start_y))
-                self.canvas.coords(self.current_drawn, self.start_x - radius, self.start_y - radius, self.start_x + radius, self.start_y + radius)
-            else:
-                dx = event.x - self.start_x
-                dy = event.y - self.start_y
-                radius = (dx**2 + dy**2)**0.5
-                self.canvas.coords(self.current_drawn, self.start_x - radius, self.start_y - radius, self.start_x + radius, self.start_y + radius)
-        elif self.current_drawn and self.drawing_tool == "line":
-            self.canvas.coords(self.current_drawn, self.start_x, self.start_y, event.x, event.y)
 
     def on_button_release(self, event):
         if self.current_drawn:
@@ -154,6 +170,7 @@ class SVGEditor:
 
     def select_tool(self, tool):
         self.drawing_tool = tool
+        print(tool + " ausgewählt")
         self.selected = None
         self.current_drawn = None
         if self.drawing_tool == "free":
@@ -199,11 +216,12 @@ class SVGEditor:
         if filename:
             tree.write(filename)
 
-
-
-
     def set_line_thickness(self):
-        self.line_thickness = int(self.line_thickness_var.get())
+        try:
+            self.line_thickness = int(self.line_thickness_var.get())
+            print("Linienstärke gesetzt auf:", self.line_thickness)
+        except ValueError:
+            messagebox.showerror("Fehler", "Bitte eine gültige Zahl eingeben")
 
     def run(self):
         self.root.mainloop()
