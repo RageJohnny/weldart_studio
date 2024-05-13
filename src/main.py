@@ -26,14 +26,30 @@ class SVGEditor:
         self.add_buttons_to_toolbar()
 
         self.line_thickness_frame = tk.Frame(self.root, bg="lightgrey")
+
+        # Überschrift hinzufügen
+        settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="lightgrey", font=("Helvetica", 10, "bold"))
+        settings_label.pack(side="top", pady=(5, 0))
+
+        # Linienstärke-Eingabefeld hinzufügen
         self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="lightgrey")
-        self.line_thickness_label.pack(pady=(5, 0))  # Padding to separate from the entry box
+        self.line_thickness_label.pack(pady=(5, 0))
         self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
         self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var)
-        self.line_thickness_entry.pack(pady=5)
+        self.line_thickness_entry.pack(pady=5, side="top")
+        self.line_thickness_entry.config(state="disabled")  # Deaktiviert das Textfeld standardmäßig
+
+        # Gefüllt-Checkbox hinzufügen
+        self.fill_checkbox_var = tk.BooleanVar(value=False)
+        self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Filled", variable=self.fill_checkbox_var, command=self.toggle_fill)
+        self.fill_checkbox.pack(side="top", padx=5, pady=20)
+
+        # OK-Button hinzufügen
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
-        self.line_thickness_button.pack(pady=5)
-        self.line_thickness_frame.pack(side="right", fill="y",padx=(10, 10), pady=(10,10))
+        self.line_thickness_button.pack(pady=5, side="top")
+
+        # Frame packen
+        self.line_thickness_frame.pack(side="right", fill="y", padx=(10, 10), pady=(10, 10))
 
         
 
@@ -52,9 +68,6 @@ class SVGEditor:
         self.bind_canvas_events()
         self.root.bind("<Configure>", self.redraw_rulers)
 
-        self.fill_checkbox_var = tk.BooleanVar(value=False)
-        self.fill_checkbox = ttk.Checkbutton(self.toolbar, text="Gefüllt", variable=self.fill_checkbox_var, command=self.toggle_fill)
-        self.fill_checkbox.pack(side="top", fill="x")
 
     def load_icons(self):
         # Icon files should be in the 'icons' directory relative to this script
@@ -68,6 +81,8 @@ class SVGEditor:
         self.select_image = tk.PhotoImage(file="icons/select.png").subsample(12)
 
     def add_buttons_to_toolbar(self):
+        self.rect_button = tk.Button(self.toolbar, image=self.select_image, command=lambda: self.select_tool("select"))
+        self.rect_button.pack(side="top", fill="x")
         self.rect_button = tk.Button(self.toolbar, image=self.rect_image, command=lambda: self.select_tool("rectangle"))
         self.rect_button.pack(side="top", fill="x")
         self.circle_button = tk.Button(self.toolbar, image=self.circle_image, command=lambda: self.select_tool("circle"))
@@ -76,9 +91,9 @@ class SVGEditor:
         self.line_button.pack(side="top", fill="x")
         self.free_button = tk.Button(self.toolbar, image=self.free_image, command=lambda: self.select_tool("free"))
         self.free_button.pack(side="top", fill="x")
-        self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"))
+        self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"), state=tk.DISABLED)
         self.move_button.pack(side="top", fill="x")
-        self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"))
+        self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"), state=tk.DISABLED)
         self.resize_button.pack(side="top", fill="x")
         self.reset_button = tk.Button(self.toolbar, image=self.reset_image, command=self.reset_canvas)
         self.reset_button.pack(side="top", fill="x")
@@ -106,11 +121,11 @@ class SVGEditor:
     def add_menu(self):
         self.menu_bar = tk.Menu(self.root)
         file_menu = tk.Menu(self.menu_bar, tearoff=0)
-        file_menu.add_command(label="Speichern als SVG", command=self.save_as_svg)
-        self.menu_bar.add_cascade(label="Datei", menu=file_menu)
+        file_menu.add_command(label="Save as SVG", command=self.save_as_svg)
+        self.menu_bar.add_cascade(label="File", menu=file_menu)
         about_menu = tk.Menu(self.menu_bar, tearoff=0)
-        about_menu.add_command(label="Über", command=lambda: messagebox.showinfo("Über", "Erstellt von Johannes Georg Larcher"))
-        self.menu_bar.add_cascade(label="Über", menu=about_menu)
+        about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "Copyright Johannes Georg Larcher"))
+        self.menu_bar.add_cascade(label="About", menu=about_menu)
         self.root.config(menu=self.menu_bar)
 
     def toggle_fill(self):
@@ -139,10 +154,14 @@ class SVGEditor:
 
     def on_button_motion(self, event):
         if self.drawing_tool == "move" and self.selected:
-            dx, dy = event.x - self.start_x, event.y - self.start_y
-            self.canvas.move(self.selected, dx, dy)
-            self.start_x, self.start_y = event.x, event.y
-        elif self.drawing_tool in ["resize", "rectangle", "circle", "line"]:
+            if self.selected == self.canvas.find_closest(event.x, event.y)[0]:  # Überprüfe, ob das nächste Objekt das ausgewählte ist
+                dx, dy = event.x - self.start_x, event.y - self.start_y
+                self.canvas.move(self.selected, dx, dy)
+                self.start_x, self.start_y = event.x, event.y
+        elif self.drawing_tool == "resize" and self.selected:
+            if self.selected == self.current_drawn:  # Stelle sicher, dass das zu verändernde Objekt das ausgewählte ist
+                self.update_shape(event)
+        elif self.drawing_tool in ["rectangle", "circle", "line"]:
             self.update_shape(event)
         elif self.drawing_tool == "free":
             x, y = event.x, event.y
@@ -172,20 +191,81 @@ class SVGEditor:
     def on_button_release(self, event):
         if self.current_drawn:
             self.update_shape(event)
-            self.current_drawn = None
+
+        # Überprüfe, ob das Tool zum Resizen oder Bewegen verwendet wurde
+        if self.drawing_tool in ["resize", "move"]:
+            # Entferne das Highlight vom bearbeiteten Objekt
+            if self.canvas.type(self.selected) in ["rectangle", "oval"]:
+                self.canvas.itemconfig(self.selected, outline="black", width=1)
+            elif self.canvas.type(self.selected) == "line":
+                self.canvas.itemconfig(self.selected, fill="black", width=1)
+
+            # Setze das ausgewählte Objekt zurück
+            self.selected = None
+
+            # Deaktiviere die Resize- und Move-Buttons
+            self.resize_button.config(state=tk.DISABLED)
+            self.move_button.config(state=tk.DISABLED)
+
+        # Setze das current_drawn-Objekt zurück, unabhängig vom Werkzeug
+        self.current_drawn = None
         self.selected = None
 
     def select_tool(self, tool):
         self.drawing_tool = tool
-        #print(tool + " ausgewählt")
-        self.selected = None
-        self.current_drawn = None
-        if self.drawing_tool == "free":
-            self.line_thickness_frame.pack(side="right", fill="y")
-            self.line_thickness_entry.config(state="normal")
+        self.canvas.unbind("<Button-1>")
+        if self.drawing_tool == "select":
+            self.canvas.bind("<Button-1>", self.on_canvas_click)
         else:
-            self.line_thickness_frame.pack_forget()
-            self.line_thickness_entry.config(state="disabled")
+            self.bind_canvas_events()
+            # Überprüfe, ob ein Objekt hervorgehoben ist, bevor der Resize-Button aktiviert wird
+            if self.selected and self.canvas.itemcget(self.selected, "outline") == "yellow":
+                if tool == "resize":
+                    self.resize_button.config(state=tk.NORMAL)
+                else:
+                    self.resize_button.config(state=tk.DISABLED)
+            else:
+                self.move_button.config(state=tk.DISABLED)
+                self.resize_button.config(state=tk.DISABLED)
+
+            if self.drawing_tool == "free":
+                self.line_thickness_frame.pack(side="right", fill="y")
+                self.line_thickness_entry.config(state="normal")
+            else:
+                self.line_thickness_entry.config(state="disabled")
+
+
+
+    def clear_selection(self):
+        if self.selected:
+            self.canvas.itemconfig(self.selected, outline="black")  # Setze die Highlight-Farbe zurück
+            self.selected = None  # Setze das ausgewählte Objekt zurück
+
+    def on_canvas_click(self, event):
+        if self.drawing_tool == "select":
+            for item in self.canvas.find_all():
+                item_type = self.canvas.type(item)
+                if item_type in ["rectangle", "oval"]:  # Diese Typen unterstützen 'outline'
+                    self.canvas.itemconfig(item, outline="black", width=1)
+                elif item_type == "line":  # Linien unterstützen 'fill' statt 'outline'
+                    self.canvas.itemconfig(item, fill="black", width=1)
+
+            selected_items = self.canvas.find_overlapping(event.x-1, event.y-1, event.x+1, event.y+1)
+            if selected_items:
+                self.selected = selected_items[-1]
+                selected_type = self.canvas.type(self.selected)
+                if selected_type in ["rectangle", "oval"]:
+                    self.canvas.itemconfig(self.selected, outline="yellow", width=3)
+                elif selected_type == "line":
+                    self.canvas.itemconfig(self.selected, fill="yellow", width=3)
+                self.move_button.config(state=tk.NORMAL)
+                self.resize_button.config(state=tk.NORMAL)
+            else:
+                self.selected = None
+                self.move_button.config(state=tk.DISABLED)
+                self.resize_button.config(state=tk.DISABLED)
+
+
 
     def reset_canvas(self):
         if messagebox.askokcancel("Zurücksetzen bestätigen", "Möchten Sie wirklich die Zeichenfläche zurücksetzen?"):
@@ -229,6 +309,14 @@ class SVGEditor:
             print("Linienstärke gesetzt auf:", self.line_thickness)
         except ValueError:
             messagebox.showerror("Fehler", "Bitte eine gültige Zahl eingeben")
+
+    def clear_highlights(self):
+        for item in self.canvas.find_all():
+            item_type = self.canvas.type(item)
+            if item_type in ["rectangle", "oval"]:
+                self.canvas.itemconfig(item, outline="black", width=1)
+            elif item_type in ["line"]:
+                self.canvas.itemconfig(item, fill="black", width=1)
 
     def run(self):
         self.root.mainloop()
