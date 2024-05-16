@@ -123,6 +123,17 @@ class SVGEditor:
         Tooltip(self.reset_button, "Reset Canvas")
         Tooltip(self.erase_button, "Erase Freehand Line")
 
+        # Variables to track panning
+        self.pan_start_x = None
+        self.pan_start_y = None
+        self.canvas_x = 0
+        self.canvas_y = 0
+
+        # Bind events for panning
+        self.canvas.bind("<ButtonPress-2>", self.start_pan)
+        self.canvas.bind("<B2-Motion>", self.do_pan)
+        self.canvas.bind("<ButtonRelease-2>", self.stop_pan)
+
     def load_icons(self):
         self.rect_image = tk.PhotoImage(file="icons/rectangle.png").subsample(12)
         self.circle_image = tk.PhotoImage(file="icons/circle.png").subsample(12)
@@ -158,6 +169,15 @@ class SVGEditor:
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_button_motion)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+
+    def start_pan(self, event):
+        self.canvas.scan_mark(event.x, event.y)
+
+    def do_pan(self, event):
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
+
+    def stop_pan(self, event):
+        pass
 
     def redraw_rulers(self, event=None):
         self.horizontal_ruler.delete("all")
@@ -283,25 +303,20 @@ class SVGEditor:
         for item in overlapping_items:
             if self.canvas.type(item) == "line":
                 self.canvas.delete(item)
-                self.undo_stack.append(item)
-                self.redo_stack = []
 
     def update_eraser_circle(self, event):
-        if self.drawing_tool == "erase":
+        if self.drawing_tool == "erase" and self.eraser_circle:
             radius = self.eraser_radius
-            x, y = event.x, event.y
-            if self.eraser_circle:
-                self.canvas.coords(self.eraser_circle, x - radius, y - radius, x + radius, y + radius)
-            else:
-                self.eraser_circle = self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="red", dash=(2, 2))
-        else:
-            if self.eraser_circle:
-                self.canvas.delete(self.eraser_circle)
-                self.eraser_circle = None
+            self.canvas.coords(self.eraser_circle, event.x - radius, event.y - radius, event.x + radius, event.y + radius)
 
     def zoom(self, event):
-        scale = 1.1 if event.delta > 0 else 0.9
-        self.zoom_scale *= scale
+        scale = 1.0
+        if event.delta > 0:
+            scale *= 1.1
+            self.zoom_scale *= 1.1
+        elif event.delta < 0:
+            scale /= 1.1
+            self.zoom_scale /= 1.1
         self.canvas.scale("all", event.x, event.y, scale, scale)
         self.redraw_rulers()
 
@@ -407,7 +422,7 @@ class SVGEditor:
         filename = filedialog.asksaveasfilename(defaultextension=".svg", filetypes=[("SVG Files", "*.svg")])
         if filename:
             tree.write(filename)
-        if self.eraser_circle:
+        if self.drawing_tool == "erase":
             self.eraser_circle = self.canvas.create_oval(0, 0, 0, 0, outline="red", dash=(2, 2))  # Recreate eraser circle
 
     def set_line_thickness(self):
