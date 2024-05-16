@@ -14,9 +14,11 @@ class SVGEditor:
         self.current_drawn = None
         self.selected = None
         self.line_thickness = 1
+        self.eraser_radius = 10
         self.fill_enabled = False
         self.undo_stack = []
         self.redo_stack = []
+        self.eraser_circle = None
 
         self.add_menu()
         
@@ -55,11 +57,31 @@ class SVGEditor:
         self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Fill Objects", variable=self.fill_checkbox_var, command=self.toggle_fill, style="TCheckbutton")
         self.fill_checkbox.pack(side="top", padx=10, pady=10, anchor="w")
         
-
         # Adding a description label for Fill Objects
         self.fill_objects_desc = tk.Label(self.line_thickness_frame, text="Determines whether objects are filled or just outlined.", bg="#f0f0f0", font=("Helvetica", 8))
         self.fill_objects_desc.pack(pady=(0, 10), fill="x")
         self.fill_objects_desc.config(anchor="center")
+
+        # Adding separator and Eraser Radius label
+        ttk.Separator(self.line_thickness_frame, orient="horizontal").pack(fill="x", pady=10)
+        eraser_radius_label = tk.Label(self.line_thickness_frame, text="Eraser Radius in px", bg="#f0f0f0", font=("Helvetica", 12, "bold"))
+        eraser_radius_label.pack(pady=(10, 0), fill="x")
+        eraser_radius_label.config(anchor="center")
+
+        self.eraser_radius_var = tk.IntVar(value=self.eraser_radius)
+        self.eraser_radius_slider = ttk.Scale(self.line_thickness_frame, from_=0, to=200, orient=tk.HORIZONTAL, variable=self.eraser_radius_var, command=self.update_eraser_radius)
+        self.eraser_radius_slider.pack(pady=10, side="top", fill="x")
+        self.eraser_radius_slider.state(['disabled'])  # Disable slider by default
+
+        # Adding a label to display current eraser radius value
+        self.eraser_radius_value = tk.Label(self.line_thickness_frame, text=f"{self.eraser_radius} px", bg="#f0f0f0", font=("Helvetica", 10))
+        self.eraser_radius_value.pack(pady=(0, 10), fill="x")
+        self.eraser_radius_value.config(anchor="center")
+
+        # Adding a description label for Eraser Radius
+        self.eraser_radius_desc = tk.Label(self.line_thickness_frame, text="Sets the radius in pixels for the eraser.", bg="#f0f0f0", font=("Helvetica", 8))
+        self.eraser_radius_desc.pack(pady=(0, 10), fill="x")
+        self.eraser_radius_desc.config(anchor="center")
 
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
         self.line_thickness_button.pack(pady=10, side="top")
@@ -95,6 +117,7 @@ class SVGEditor:
         Tooltip(self.move_button, "Move Object")
         Tooltip(self.resize_button, "Resize Object")
         Tooltip(self.reset_button, "Reset Canvas")
+        Tooltip(self.erase_button, "Erase Freehand Line")
 
     def load_icons(self):
         self.rect_image = tk.PhotoImage(file="icons/rectangle.png").subsample(12)
@@ -105,6 +128,7 @@ class SVGEditor:
         self.resize_image = tk.PhotoImage(file="icons/resize.png").subsample(12)
         self.reset_image = tk.PhotoImage(file="icons/reset.png").subsample(12)
         self.select_image = tk.PhotoImage(file="icons/select.png").subsample(12)
+        self.erase_image = tk.PhotoImage(file="icons/erase.png").subsample(12)  # Add erase icon
 
     def add_buttons_to_toolbar(self):
         self.select_button = tk.Button(self.toolbar, image=self.select_image, command=lambda: self.select_tool("select"), bg="white")
@@ -117,6 +141,8 @@ class SVGEditor:
         self.line_button.pack(side="top", fill="x", padx=2, pady=2)
         self.free_button = tk.Button(self.toolbar, image=self.free_image, command=lambda: self.select_tool("free"), bg="white")
         self.free_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.erase_button = tk.Button(self.toolbar, image=self.erase_image, command=lambda: self.select_tool("erase"), bg="white")  # Add erase button
+        self.erase_button.pack(side="top", fill="x", padx=2, pady=2)
         self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"), state=tk.DISABLED, bg="white")
         self.move_button.pack(side="top", fill="x", padx=2, pady=2)
         self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"), state=tk.DISABLED, bg="white")
@@ -170,6 +196,8 @@ class SVGEditor:
             self.canvas.tag_raise(self.selected)
             if self.drawing_tool == "resize":
                 self.current_drawn = self.selected
+        elif self.drawing_tool == "erase":
+            self.erase_line(event)
         elif self.drawing_tool in ["rectangle", "circle", "line"]:
             if self.drawing_tool == "rectangle":
                 fill_color = "red" if self.fill_enabled else ""
@@ -199,6 +227,9 @@ class SVGEditor:
             x, y = event.x, event.y
             self.canvas.create_line(self.prev_x, self.prev_y, x, y, fill='black', width=self.line_thickness, smooth=True, capstyle=tk.ROUND)
             self.prev_x, self.prev_y = x, y
+        elif self.drawing_tool == "erase":
+            self.erase_line(event)
+        self.update_eraser_circle(event)
 
     def update_shape(self, event):
         if self.current_drawn:
@@ -238,6 +269,32 @@ class SVGEditor:
         self.current_drawn = None
         self.selected = None
 
+        if self.eraser_circle:
+            self.canvas.delete(self.eraser_circle)
+            self.eraser_circle = None
+
+    def erase_line(self, event):
+        radius = self.eraser_radius
+        overlapping_items = self.canvas.find_overlapping(event.x - radius, event.y - radius, event.x + radius, event.y + radius)
+        for item in overlapping_items:
+            if self.canvas.type(item) == "line":
+                self.canvas.delete(item)
+                self.undo_stack.append(item)
+                self.redo_stack = []
+
+    def update_eraser_circle(self, event):
+        if self.drawing_tool == "erase":
+            radius = self.eraser_radius
+            x, y = event.x, event.y
+            if self.eraser_circle:
+                self.canvas.coords(self.eraser_circle, x - radius, y - radius, x + radius, y + radius)
+            else:
+                self.eraser_circle = self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="red", dash=(2, 2))
+        else:
+            if self.eraser_circle:
+                self.canvas.delete(self.eraser_circle)
+                self.eraser_circle = None
+
     def select_tool(self, tool):
         self.drawing_tool = tool
         self.current_drawn = None  # Reset current_drawn when tool is changed
@@ -260,6 +317,16 @@ class SVGEditor:
                 self.line_thickness_entry.config(state="normal")
             else:
                 self.line_thickness_entry.config(state="disabled")
+
+            if self.drawing_tool == "erase":
+                self.eraser_radius_slider.state(['!disabled'])
+                self.canvas.bind("<Motion>", self.update_eraser_circle)
+            else:
+                self.eraser_radius_slider.state(['disabled'])
+                self.canvas.unbind("<Motion>")
+                if self.eraser_circle:
+                    self.canvas.delete(self.eraser_circle)
+                    self.eraser_circle = None
 
     def clear_selection(self):
         if self.selected:
@@ -332,9 +399,16 @@ class SVGEditor:
     def set_line_thickness(self):
         try:
             self.line_thickness = int(self.line_thickness_var.get())
-            print("Linienstärke gesetzt auf:", self.line_thickness)
+            self.eraser_radius = self.eraser_radius_var.get()
+            #print("Linienstärke gesetzt auf:", self.line_thickness)
+            #rint("Radiergummi-Radius gesetzt auf:", self.eraser_radius)
         except ValueError:
             messagebox.showerror("Fehler", "Bitte eine gültige Zahl eingeben")
+
+    def update_eraser_radius(self, val):
+        self.eraser_radius = int(float(val))
+        self.eraser_radius_value.config(text=f"{self.eraser_radius} px")
+        #print("Radiergummi-Radius aktualisiert auf:", self.eraser_radius)
 
     def clear_highlights(self):
         for item in self.canvas.find_all():
