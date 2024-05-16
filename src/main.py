@@ -19,6 +19,7 @@ class SVGEditor:
         self.undo_stack = []
         self.redo_stack = []
         self.eraser_circle = None
+        self.zoom_scale = 1.0  # Initial zoom scale
 
         self.add_menu()
         
@@ -103,6 +104,9 @@ class SVGEditor:
         self.root.bind("<Control-z>", lambda event: self.undo())
         self.root.bind("<Control-y>", lambda event: self.redo())
         self.root.bind("<Control-s>", lambda event: self.save_as_svg())
+
+        # Mousewheel zoom binding
+        self.canvas.bind("<MouseWheel>", self.zoom)
 
         # Styling für Checkbutton
         self.style = ttk.Style()
@@ -295,6 +299,12 @@ class SVGEditor:
                 self.canvas.delete(self.eraser_circle)
                 self.eraser_circle = None
 
+    def zoom(self, event):
+        scale = 1.1 if event.delta > 0 else 0.9
+        self.zoom_scale *= scale
+        self.canvas.scale("all", event.x, event.y, scale, scale)
+        self.redraw_rulers()
+
     def select_tool(self, tool):
         self.drawing_tool = tool
         self.current_drawn = None  # Reset current_drawn when tool is changed
@@ -321,6 +331,7 @@ class SVGEditor:
             if self.drawing_tool == "erase":
                 self.eraser_radius_slider.state(['!disabled'])
                 self.canvas.bind("<Motion>", self.update_eraser_circle)
+                self.eraser_circle = self.canvas.create_oval(0, 0, 0, 0, outline="red", dash=(2, 2))  # Add eraser circle initially
             else:
                 self.eraser_radius_slider.state(['disabled'])
                 self.canvas.unbind("<Motion>")
@@ -400,15 +411,15 @@ class SVGEditor:
         try:
             self.line_thickness = int(self.line_thickness_var.get())
             self.eraser_radius = self.eraser_radius_var.get()
-            #print("Linienstärke gesetzt auf:", self.line_thickness)
-            #rint("Radiergummi-Radius gesetzt auf:", self.eraser_radius)
+            print("Linienstärke gesetzt auf:", self.line_thickness)
+            print("Radiergummi-Radius gesetzt auf:", self.eraser_radius)
         except ValueError:
             messagebox.showerror("Fehler", "Bitte eine gültige Zahl eingeben")
 
     def update_eraser_radius(self, val):
         self.eraser_radius = int(float(val))
         self.eraser_radius_value.config(text=f"{self.eraser_radius} px")
-        #print("Radiergummi-Radius aktualisiert auf:", self.eraser_radius)
+        print("Radiergummi-Radius aktualisiert auf:", self.eraser_radius)
 
     def clear_highlights(self):
         for item in self.canvas.find_all():
