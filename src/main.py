@@ -31,24 +31,35 @@ class SVGEditor:
         settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="#d9d9d9", font=("Helvetica", 16, "bold"))
         settings_label.pack(side="top", pady=(10, 10), fill="x")
 
-        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="#f0f0f0", font=("Helvetica", 12))
+        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="#f0f0f0", font=("Helvetica", 12, "bold"))
         self.line_thickness_label.pack(pady=(10, 0), fill="x")
         self.line_thickness_label.config(anchor="center")
 
         self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
-        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var, font=("Helvetica", 12))
+        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var, font=("Helvetica", 10))
         self.line_thickness_entry.pack(pady=10, side="top", fill="x")
         self.line_thickness_entry.config(state="disabled")
 
+        # Adding a description label for Line Thickness
+        self.line_thickness_desc = tk.Label(self.line_thickness_frame, text="Sets the thickness in mm for the freehand pencil.", bg="#f0f0f0", font=("Helvetica", 8))
+        self.line_thickness_desc.pack(pady=(0, 10), fill="x")
+        self.line_thickness_desc.config(anchor="center")
+
         # Adding separator and Fill Objects label
         ttk.Separator(self.line_thickness_frame, orient="horizontal").pack(fill="x", pady=10)
-        fill_objects_label = tk.Label(self.line_thickness_frame, text="Fill Objects", bg="#f0f0f0", font=("Helvetica", 12))
+        fill_objects_label = tk.Label(self.line_thickness_frame, text="Fill Objects", bg="#f0f0f0", font=("Helvetica", 12, "bold"))
         fill_objects_label.pack(pady=(10, 0), fill="x")
         fill_objects_label.config(anchor="center")
 
         self.fill_checkbox_var = tk.BooleanVar(value=False)
-        self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Filled", variable=self.fill_checkbox_var, command=self.toggle_fill, style="TCheckbutton")
+        self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Fill Objects", variable=self.fill_checkbox_var, command=self.toggle_fill, style="TCheckbutton")
         self.fill_checkbox.pack(side="top", padx=10, pady=10, anchor="w")
+        
+
+        # Adding a description label for Fill Objects
+        self.fill_objects_desc = tk.Label(self.line_thickness_frame, text="Determines whether objects are filled or just outlined.", bg="#f0f0f0", font=("Helvetica", 8))
+        self.fill_objects_desc.pack(pady=(0, 10), fill="x")
+        self.fill_objects_desc.config(anchor="center")
 
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
         self.line_thickness_button.pack(pady=10, side="top")
@@ -73,7 +84,7 @@ class SVGEditor:
 
         # Styling für Checkbutton
         self.style = ttk.Style()
-        self.style.configure("TCheckbutton", background="#f0f0f0", font=("Helvetica", 12))
+        self.style.configure("TCheckbutton", background="#f0f0f0", font=("Helvetica", 10))
 
         # Adding tooltips
         Tooltip(self.select_button, "Select Tool")
