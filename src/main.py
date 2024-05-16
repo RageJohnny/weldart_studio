@@ -6,7 +6,7 @@ class SVGEditor:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("WELDART Studio")
-        self.root.geometry("1000x700")
+        self.root.geometry("1200x800")
         self.root.iconbitmap('icons/logo.ico')
 
         self.drawing_tool = None
@@ -18,42 +18,41 @@ class SVGEditor:
         self.redo_stack = []
 
         self.add_menu()
-        self.toolbar = tk.Frame(self.root, bg="lightgrey")
-        self.toolbar.pack(side="left", fill="y", padx=(10, 10), pady=(10, 10))
+        
+        self.toolbar = tk.Frame(self.root, bg="#f0f0f0", bd=2, relief=tk.RAISED)
+        self.toolbar.pack(side="left", fill="y", padx=(10, 0), pady=10)
 
         self.load_icons()
         self.add_buttons_to_toolbar()
 
-        self.line_thickness_frame = tk.Frame(self.root, bg="lightgrey")
+        self.line_thickness_frame = tk.Frame(self.root, bg="#f0f0f0", bd=2, relief=tk.RAISED)
+        
+        settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="#f0f0f0", font=("Helvetica", 14, "bold"))
+        settings_label.pack(side="top", pady=(10, 0))
 
-        settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="lightgrey", font=("Helvetica", 10, "bold"))
-        settings_label.pack(side="top", pady=(5, 0))
-
-        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="lightgrey")
-        self.line_thickness_label.pack(pady=(5, 0))
+        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="#f0f0f0", font=("Helvetica", 10))
+        self.line_thickness_label.pack(pady=(10, 0))
         self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
         self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var)
-        self.line_thickness_entry.pack(pady=5, side="top")
+        self.line_thickness_entry.pack(pady=10, side="top")
         self.line_thickness_entry.config(state="disabled")
 
         self.fill_checkbox_var = tk.BooleanVar(value=False)
         self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Filled", variable=self.fill_checkbox_var, command=self.toggle_fill)
-        self.fill_checkbox.pack(side="top", padx=5, pady=20)
+        self.fill_checkbox.pack(side="top", padx=10, pady=10)
 
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
-        self.line_thickness_button.pack(pady=5, side="top")
+        self.line_thickness_button.pack(pady=10, side="top")
 
-        self.line_thickness_frame.pack(side="right", fill="y", padx=(10, 10), pady=(10, 10))
+        self.line_thickness_frame.pack(side="right", fill="y", padx=(0, 10), pady=10)
 
-        self.horizontal_ruler = tk.Canvas(self.root, bg='white', height=30)
-        self.horizontal_ruler.pack(side="top", fill="x", padx=(30, 0))
-        self.vertical_ruler = tk.Canvas(self.root, bg='white', width=30)
-        self.vertical_ruler.pack(side="left", fill="y")
+        self.horizontal_ruler = tk.Canvas(self.root, bg='#f8f8f8', height=30)
+        self.horizontal_ruler.pack(side="top", fill="x", padx=(30, 0), pady=(10, 0))
+        self.vertical_ruler = tk.Canvas(self.root, bg='#f8f8f8', width=30)
+        self.vertical_ruler.pack(side="left", fill="y", padx=(0, 10), pady=(0, 10))
 
-        self.canvas = tk.Canvas(self.root, width=800, height=600, bg='white')
-        self.horizontal_ruler.pack(side="top", fill=tk.X)
-        self.vertical_ruler.pack(side="left", fill=tk.Y)
-        self.canvas.pack(side="left", fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self.root, width=900, height=700, bg='white')
+        self.canvas.pack(side="left", fill=tk.BOTH, expand=True, padx=(0, 10), pady=(0, 10))
 
         self.bind_canvas_events()
         self.root.bind("<Configure>", self.redraw_rulers)
@@ -74,22 +73,22 @@ class SVGEditor:
         self.select_image = tk.PhotoImage(file="icons/select.png").subsample(12)
 
     def add_buttons_to_toolbar(self):
-        self.select_button = tk.Button(self.toolbar, image=self.select_image, command=lambda: self.select_tool("select"))
-        self.select_button.pack(side="top", fill="x")
-        self.rect_button = tk.Button(self.toolbar, image=self.rect_image, command=lambda: self.select_tool("rectangle"))
-        self.rect_button.pack(side="top", fill="x")
-        self.circle_button = tk.Button(self.toolbar, image=self.circle_image, command=lambda: self.select_tool("circle"))
-        self.circle_button.pack(side="top", fill="x")
-        self.line_button = tk.Button(self.toolbar, image=self.line_image, command=lambda: self.select_tool("line"))
-        self.line_button.pack(side="top", fill="x")
-        self.free_button = tk.Button(self.toolbar, image=self.free_image, command=lambda: self.select_tool("free"))
-        self.free_button.pack(side="top", fill="x")
-        self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"), state=tk.DISABLED)
-        self.move_button.pack(side="top", fill="x")
-        self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"), state=tk.DISABLED)
-        self.resize_button.pack(side="top", fill="x")
-        self.reset_button = tk.Button(self.toolbar, image=self.reset_image, command=self.reset_canvas)
-        self.reset_button.pack(side="top", fill="x")
+        self.select_button = tk.Button(self.toolbar, image=self.select_image, command=lambda: self.select_tool("select"), bg="white")
+        self.select_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.rect_button = tk.Button(self.toolbar, image=self.rect_image, command=lambda: self.select_tool("rectangle"), bg="white")
+        self.rect_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.circle_button = tk.Button(self.toolbar, image=self.circle_image, command=lambda: self.select_tool("circle"), bg="white")
+        self.circle_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.line_button = tk.Button(self.toolbar, image=self.line_image, command=lambda: self.select_tool("line"), bg="white")
+        self.line_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.free_button = tk.Button(self.toolbar, image=self.free_image, command=lambda: self.select_tool("free"), bg="white")
+        self.free_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.move_button = tk.Button(self.toolbar, image=self.move_image, command=lambda: self.select_tool("move"), state=tk.DISABLED, bg="white")
+        self.move_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.resize_button = tk.Button(self.toolbar, image=self.resize_image, command=lambda: self.select_tool("resize"), state=tk.DISABLED, bg="white")
+        self.resize_button.pack(side="top", fill="x", padx=2, pady=2)
+        self.reset_button = tk.Button(self.toolbar, image=self.reset_image, command=self.reset_canvas, bg="white")
+        self.reset_button.pack(side="top", fill="x", padx=2, pady=2)
 
     def bind_canvas_events(self):
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
@@ -105,11 +104,11 @@ class SVGEditor:
         width = self.canvas.winfo_width()
         for i in range(0, width, 50):
             self.horizontal_ruler.create_line(i, 10, i, 30, fill="gray")
-            self.horizontal_ruler.create_text(i+5, 20, text=str(i), anchor="n")
+            self.horizontal_ruler.create_text(i+5, 20, text=str(i), anchor="n", font=("Helvetica", 8))
         height = self.canvas.winfo_height()
         for i in range(0, height, 50):
             self.vertical_ruler.create_line(10, i, 30, i, fill="gray")
-            self.vertical_ruler.create_text(20, i+5, text=str(i), anchor="e")
+            self.vertical_ruler.create_text(20, i+5, text=str(i), anchor="e", font=("Helvetica", 8))
 
     def add_menu(self):
         self.menu_bar = tk.Menu(self.root)
