@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import xml.etree.ElementTree as ET
+from tooltip import *
 
 class SVGEditor:
     def __init__(self):
@@ -25,21 +26,29 @@ class SVGEditor:
         self.load_icons()
         self.add_buttons_to_toolbar()
 
-        self.line_thickness_frame = tk.Frame(self.root, bg="#f0f0f0", bd=2, relief=tk.RAISED)
+        self.line_thickness_frame = tk.Frame(self.root, bg="#f0f0f0", bd=2, relief=tk.SUNKEN, padx=10, pady=10)
         
-        settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="#f0f0f0", font=("Helvetica", 14, "bold"))
-        settings_label.pack(side="top", pady=(10, 0))
+        settings_label = tk.Label(self.line_thickness_frame, text="Settings", bg="#d9d9d9", font=("Helvetica", 16, "bold"))
+        settings_label.pack(side="top", pady=(10, 10), fill="x")
 
-        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="#f0f0f0", font=("Helvetica", 10))
-        self.line_thickness_label.pack(pady=(10, 0))
+        self.line_thickness_label = tk.Label(self.line_thickness_frame, text="Line Thickness in mm", bg="#f0f0f0", font=("Helvetica", 12))
+        self.line_thickness_label.pack(pady=(10, 0), fill="x")
+        self.line_thickness_label.config(anchor="center")
+
         self.line_thickness_var = tk.StringVar(value=str(self.line_thickness))
-        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var)
-        self.line_thickness_entry.pack(pady=10, side="top")
+        self.line_thickness_entry = ttk.Entry(self.line_thickness_frame, textvariable=self.line_thickness_var, font=("Helvetica", 12))
+        self.line_thickness_entry.pack(pady=10, side="top", fill="x")
         self.line_thickness_entry.config(state="disabled")
 
+        # Adding separator and Fill Objects label
+        ttk.Separator(self.line_thickness_frame, orient="horizontal").pack(fill="x", pady=10)
+        fill_objects_label = tk.Label(self.line_thickness_frame, text="Fill Objects", bg="#f0f0f0", font=("Helvetica", 12))
+        fill_objects_label.pack(pady=(10, 0), fill="x")
+        fill_objects_label.config(anchor="center")
+
         self.fill_checkbox_var = tk.BooleanVar(value=False)
-        self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Filled", variable=self.fill_checkbox_var, command=self.toggle_fill)
-        self.fill_checkbox.pack(side="top", padx=10, pady=10)
+        self.fill_checkbox = ttk.Checkbutton(self.line_thickness_frame, text="Filled", variable=self.fill_checkbox_var, command=self.toggle_fill, style="TCheckbutton")
+        self.fill_checkbox.pack(side="top", padx=10, pady=10, anchor="w")
 
         self.line_thickness_button = ttk.Button(self.line_thickness_frame, text="OK", command=self.set_line_thickness)
         self.line_thickness_button.pack(pady=10, side="top")
@@ -47,7 +56,7 @@ class SVGEditor:
         self.line_thickness_frame.pack(side="right", fill="y", padx=(0, 10), pady=10)
 
         self.horizontal_ruler = tk.Canvas(self.root, bg='#f8f8f8', height=30)
-        self.horizontal_ruler.pack(side="top", fill="x", padx=(30, 0), pady=(10, 0))
+        self.horizontal_ruler.pack(side="top", fill="x", padx=(50, 0), pady=(10, 0))
         self.vertical_ruler = tk.Canvas(self.root, bg='#f8f8f8', width=30)
         self.vertical_ruler.pack(side="left", fill="y", padx=(0, 10), pady=(0, 10))
 
@@ -61,6 +70,20 @@ class SVGEditor:
         self.root.bind("<Control-z>", lambda event: self.undo())
         self.root.bind("<Control-y>", lambda event: self.redo())
         self.root.bind("<Control-s>", lambda event: self.save_as_svg())
+
+        # Styling für Checkbutton
+        self.style = ttk.Style()
+        self.style.configure("TCheckbutton", background="#f0f0f0", font=("Helvetica", 12))
+
+        # Adding tooltips
+        Tooltip(self.select_button, "Select Tool")
+        Tooltip(self.rect_button, "Draw Rectangle")
+        Tooltip(self.circle_button, "Draw Circle")
+        Tooltip(self.line_button, "Draw Line")
+        Tooltip(self.free_button, "Free Draw")
+        Tooltip(self.move_button, "Move Object")
+        Tooltip(self.resize_button, "Resize Object")
+        Tooltip(self.reset_button, "Reset Canvas")
 
     def load_icons(self):
         self.rect_image = tk.PhotoImage(file="icons/rectangle.png").subsample(12)
