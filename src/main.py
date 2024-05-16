@@ -375,6 +375,8 @@ class SVGEditor:
             self.redo_stack = []
 
     def save_as_svg(self):
+        if self.eraser_circle:
+            self.canvas.delete(self.eraser_circle)
         svg_root = ET.Element("svg", width=str(self.canvas.winfo_width()), height=str(self.canvas.winfo_height()), xmlns="http://www.w3.org/2000/svg")
         for item in self.canvas.find_all():
             if self.canvas.itemcget(item, 'state') != 'hidden':  # Nur sichtbare Objekte speichern
@@ -401,11 +403,12 @@ class SVGEditor:
                     if 'width' in options:
                         line_attributes["stroke-width"] = str(options['width'][-1])
                     ET.SubElement(svg_root, "line", **line_attributes)
-
         tree = ET.ElementTree(svg_root)
         filename = filedialog.asksaveasfilename(defaultextension=".svg", filetypes=[("SVG Files", "*.svg")])
         if filename:
             tree.write(filename)
+        if self.eraser_circle:
+            self.eraser_circle = self.canvas.create_oval(0, 0, 0, 0, outline="red", dash=(2, 2))  # Recreate eraser circle
 
     def set_line_thickness(self):
         try:
