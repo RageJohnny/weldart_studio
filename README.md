@@ -2,7 +2,8 @@
 
 ## Übersicht
 
-WELDART Studio ist ein vielseitiges Programm, mit dem Benutzer Zeichnungen und Unterschriften mithilfe eines Grafiktabletts erstellen und diese anschließend als STL-Dateien speichern können. Diese können dann für Schweißarbeiten verwendet werden. Das Programm bietet eine Vielzahl von Werkzeugen und Funktionen, um Zeichnungen zu erstellen, zu bearbeiten und zu speichern.
+WELDART Studio ist eine vielseitige Anwendung, die es Ihnen ermöglicht, mithilfe eines Grafiktabletts Zeichnungen und Unterschriften zu erstellen. Diese Zeichnungen können Sie anschließend als STL-Dateien speichern, die für Schweißarbeiten verwendet werden können. Das Programm bietet eine breite Palette an Werkzeugen und Funktionen, mit denen Sie Ihre Zeichnungen nicht nur erstellen, sondern auch bearbeiten und speichern können. Egal, ob Sie einfache Skizzen oder komplexe Designs erstellen möchten – WELDART Studio unterstützt Sie dabei mit leistungsstarken und benutzerfreundlichen Tools.
+
 
 ## Installation
 
@@ -10,5 +11,10 @@ WELDART Studio ist ein vielseitiges Programm, mit dem Benutzer Zeichnungen und U
 2. Stelle sicher, dass Python 3.x auf deinem System installiert ist.
 3. Installiere die notwendigen Abhängigkeiten mit folgendem Befehl:
 
+   ```bash
+   pip install -r requirements.txt
+
+
+ 
    ```bash
    pip install -r requirements.txt
