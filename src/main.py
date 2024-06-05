@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox, ttk
 import xml.etree.ElementTree as ET
 from tooltip import *
 
-class SVGEditor:
+class Weldart:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("WELDART Studio")
@@ -463,5 +463,5 @@ class SVGEditor:
         self.root.mainloop()
 
 if __name__ == "__main__":
-    svg_editor = SVGEditor()
-    svg_editor.run()
+    weld_art_instance = Weldart()
+    weld_art_instance.run()
