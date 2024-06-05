@@ -1,6 +1,8 @@
 # WELDART Studio - README
 
-![WELDART Studio Logo](icons/logo.png)
+<p align="center">
+  <img src="icons/logo.png" alt="WELDART Studio Logo" width="300" />
+</p>
 
 ## Übersicht
 
