@@ -1,5 +1,7 @@
 # WELDART Studio - README
 
+![WELDART Studio Logo](icons/logo.png)
+
 ## Übersicht
 
 WELDART Studio ist eine vielseitige Anwendung, die es Ihnen ermöglicht, mithilfe eines Grafiktabletts Zeichnungen und Unterschriften zu erstellen. Diese Zeichnungen können Sie anschließend als STL-Dateien speichern, die für Schweißarbeiten verwendet werden können. Das Programm bietet eine breite Palette an Werkzeugen und Funktionen, mit denen Sie Ihre Zeichnungen nicht nur erstellen, sondern auch bearbeiten und speichern können. Egal, ob Sie einfache Skizzen oder komplexe Designs erstellen möchten – WELDART Studio unterstützt Sie dabei mit leistungsstarken und benutzerfreundlichen Tools.
