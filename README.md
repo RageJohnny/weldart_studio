@@ -76,6 +76,10 @@ Um die Zeichnung als SVG-Datei zu speichern, wähle im Menü "File" die Option "
 - **Undo**: Macht die letzte Aktion rückgängig.
 - **Redo**: Wiederholt die letzte rückgängig gemachte Aktion.
 
+## SVG2STL
+
+Das erstellte SVG kann aktuell dann mit der Website: https://svg2stl.com/ in ein STL konvertiert werden! 
+
 ## Über
 
 Im Menü "About" findest du Informationen über das Programm und den Urheber.
