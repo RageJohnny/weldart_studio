@@ -13,8 +13,12 @@ WELDART Studio ist eine vielseitige Anwendung, die es Ihnen ermöglicht, mithilf
 
    ```bash
    pip install -r requirements.txt
+   ```
 
+## Verwendung
 
- 
-   ```bash
-   pip install -r requirements.txt
+Starte das Programm mit folgendem Befehl:
+
+```bash
+python main.py
+```
